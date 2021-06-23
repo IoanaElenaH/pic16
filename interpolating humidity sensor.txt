@@ -1,0 +1,118 @@
+#include  "lcd.h"
+#include "adc.h"
+#include <xc.h>
+#define _XTAL_FREQ 8000000 
+#define RH_channel         2 
+#define Temp_Conv_Const    0.48876
+#define VDD_Max_Count      1023.0
+#define R_Ext              10000.0
+#define t_step             5
+#define min_humidity       20
+#define coloane       13
+#define linii       15                               
+int analogtemp;
+int analogumid;
+const unsigned long long tabel_impedante_ohm[linii][coloane] = 
+{
+
+
+     17500000, 15000000, 12500000, 10000000, 6700000, 5000000, 3900000, 3000000, 2400000, 1750000, 1450000, 1150000, 970000,   //20%              /   0 
+     13000000, 10000000,  7000000,  5000000, 3400000, 2600000, 1900000, 1500000, 1100000,  880000,  700000,  560000, 450000,   //25%              /   1
+      6400000,  4600000,  3200000,  2300000, 1750000, 1300000,  970000,  740000,  570000,  420000,  340000,  270000, 215000,   //30%              /   2
+      2900000,  2100000,  1500000,  1100000,  850000,  630000,  460000,  380000,  280000,  210000,  170000,  150000, 130000,   //35%              /   3
+      1400000,  1000000,   750000,   540000,  420000,  310000,  235000,  190000,  140000,  110000,   88000,   70000,  57000,   //40%              /   4
+       700000,   500000,   380000,   280000,  210000,  160000,  125000,  100000,   78000,   64000,   50000,   41000,  34000,   //45%              /   5
+       370000,   260000,   200000,   150000,  115000,   87000,   69000,   56000,   45000,   38000,   31000,   25000,  21000,   //50%              /   6
+       190000,   140000,   110000,    84000,   64000,   49000,   39000,   33000,   27000,   24000,   19500,   17000,  14000,   //55%              /   7
+       105000,    80000,    62000,    50000,   39000,   31000,   25000,   20000,   17500,   15000,   13000,   11000,   9400,   //60%              /   8
+        62000,    48000,    37000,    30000,   24000,   19500,   16000,   13000,   11500,   10000,    8600,    7600,   6800,   //65%              /   9
+        38000,    30000,    24000,    19000,   15500,   13000,   10500,    9000,    8000,    7000,    6000,    5400,   4800,   //70%              /   10
+        23000,    18000,    15000,    12000,   10000,    8400,    7200,    6200,    5600,    4900,    4200,    3800,   3400,   //75%              /   11
+        15500,    12000,    10000,     8000,    7000,    5700,    5000,    4300,    3900,    3400,    3000,    2700,   2500,   //80%              /   12
+        10500,     8200,     6800,     5500,    4800,    4000,    3500,    3100,    2800,    2400,    2100,    1900,   1800,   //85%              /   13
+         7100,     5300,     4700,     4000,    3300,    2800,    2500,    2200,    2000,    1800,    1550,    1400,   1300    //90%              /   14
+};
+
+
+                          
+
+unsigned long get_ADC_avg(unsigned char channel);
+float citeste_impedanta(void);
+unsigned char algoritm_valori_binare(unsigned long long value, unsigned char valori_linii);                                                                                                                                  
+unsigned long get_ADC_avg(unsigned char channel)
+{
+   unsigned char samples = 16;
+   unsigned long avg = 0;
+   while(samples > 0)
+   {
+       init_ADC();
+     avg += ADC_read(2);
+      samples--;
+   };
+   avg >>= 4;
+   return avg;
+}
+float citeste_temperatura(void)
+{
+   float analogtemp= 0.0;
+   analogtemp=ADC_read(1);
+   analogtemp/=2; 
+   analogtemp *= Temp_Conv_Const;
+   return analogtemp;
+   
+}
+float citeste_impedanta(void)
+{
+   float impedanta= 0.0;
+   impedanta = (float)get_ADC_avg(RH_channel);
+   impedanta= (R_Ext / ((VDD_Max_Count / impedanta) - 1));
+   return impedanta;
+   
+}
+unsigned char algoritm_valori_binare(unsigned long long value, unsigned char valori_linii)
+{
+    signed char h = (linii - 1);
+    signed char l = 0;
+    signed char m = (h / 2); 
+    
+    while(l <= h)
+    {              
+      if(value < (tabel_impedante_ohm[(unsigned char)m][valori_linii]))
+      {
+         l = (m + 1);
+      }
+      
+      else
+      {
+         h = (m - 1);
+      }
+      
+      m = ((h + l) / 2);
+        
+    }
+    
+    return ((unsigned char)m);
+  
+}          
+  void HR202_citeste(void)
+{
+   unsigned char a = 0;
+   unsigned char b = 0;
+   float t = 0;
+   unsigned long long impedanta = 0;
+   int analogumid;
+                              
+      t = citeste_temperatura();
+      impedanta = citeste_impedanta();
+      a = (t / t_step);
+      b = algoritm_valori_binare(impedanta, a);
+          lcd_goto(0x8D);
+     int analoghumidity;
+     analoghumidity=(b * t_step)+min_humidity;
+       lcd_puts(" RH:");
+       lcd_putch((analoghumidity/10)%10+'0');
+       lcd_putch(analoghumidity%10+'0');
+       lcd_putch('%');
+       __delay_us(150);
+}
+  
