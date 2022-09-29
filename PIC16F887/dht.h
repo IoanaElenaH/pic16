@@ -1,5 +1,3 @@
-
-
 #define DHT11_PIN RB0
 
 typedef struct{
@@ -14,4 +12,3 @@ void DHT11_request(void);
 void DHT11_response(void);
 char DHT11_receive(void);
 void DHT11_read(void);
-
