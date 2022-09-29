@@ -1,31 +1,15 @@
-
-
- 
-
-
-
-
-                                                           
 #include "lcd.c"   
-
-
 #define T_channel          0
 #define RH_channel         1
-
 #define Temp_Conv_Const    0.48876
 #define VDD_Max_Count      1023.0
 #define R_Ext              10000.0
 #define t_step             5
 #define min_humidity       20
-
-
 #define t_entries          13
 #define i_entries          15
                                 
-
 const unsigned char symbol[8] = {0x00, 0x06, 0x09, 0x09, 0x06, 0x00, 0x00, 0x00};
-
-
 const unsigned long long impedance_ohms_table[i_entries][t_entries] = 
 {
    //Temperature 
@@ -51,19 +35,15 @@ const unsigned long long impedance_ohms_table[i_entries][t_entries] =
          7100,     5300,     4700,     4000,    3300,    2800,    2500,    2200,    2000,    1800,    1550,    1400,   1300    //90%              /   14
 };
 
-
-                          
 void setup(void);             
 void lcd_load_custom_symbol(void); 
 unsigned long get_ADC_avg(unsigned char channel);
 float get_temperature(void);
 float get_impedance(void);
 unsigned char binary_search_impedance_zone(unsigned long long value, unsigned char t_zone);
-       
-                                                                                                                    
-                                                                                                                        
-void main()                                                                    
-{                                                         
+
+void main()
+{  
    unsigned char a = 0;
    unsigned char b = 0;
    
@@ -102,8 +82,7 @@ void main()
      
    };                                             
 }                                                 
-                                   
-                                         
+                                                                            
 void setup(void)
 {                                                                                               
    disable_interrupts(global);              
@@ -126,19 +105,14 @@ void setup(void)
    lcd_load_custom_symbol();     
    lcd_putc("\r");
 }                                                            
-
-                         
+                       
 void lcd_load_custom_symbol(void) 
 {
-   unsigned char s = 0;                 
-                                                        
+   unsigned char s = 0;                                                                    
    lcd_send_byte(0, 0x40); 
-   
-   for(s = 0; s < 8; s++)        
-   {                           
+   for(s = 0; s < 8; s++){                           
         lcd_send_byte(1, symbol[s]);          
    }    
-   
    lcd_send_byte(0, 0x80);   
 } 
 
@@ -147,71 +121,48 @@ unsigned long get_ADC_avg(unsigned char channel)
 {
    unsigned char samples = 16;
    unsigned long avg = 0;
-   
    set_ADC_channel(channel);
    delay_ms(1);
-   
-   while(samples > 0)
-   {
+   while(samples > 0){
       read_ADC(ADC_start_only);
       while(!ADC_done());
       avg += read_ADC(ADC_read_only);
       samples--;
    };
-   
    avg >>= 4;
-   
    return avg;
 }
 
 
-float get_temperature(void)
-{
+float get_temperature(void){
    float temp = 0.0;
-   
    temp = get_ADC_avg(T_channel);   
    temp *= Temp_Conv_Const;
-   
    return temp;
 }
 
 
-float get_impedance(void)
-{
+float get_impedance(void){
    float impedance = 0.0;
-   
    impedance = (float)get_ADC_avg(RH_channel);
    impedance = (R_Ext / ((VDD_Max_Count / impedance) - 1));
-    
    return impedance;
 }
 
 
 unsigned char binary_search_impedance_zone(unsigned long long value, unsigned char t_zone)
 {
-    signed char h = (i_entries - 1);
-    signed char l = 0;
-    signed char m = (h / 2); 
-    
-    while(l <= h)
-    {              
-      if(value < (impedance_ohms_table[(unsigned char)m][t_zone]))
-      {
-         l = (m + 1);
+   signed char h = (i_entries - 1);
+   signed char l = 0;
+   signed char m = (h / 2); 
+       while(l <= h){              
+            if(value < (impedance_ohms_table[(unsigned char)m][t_zone])){
+            l = (m + 1);
       }
-      
-      else
-      {
-         h = (m - 1);
+              else{
+                h = (m - 1);
       }
-      
-      m = ((h + l) / 2);
-        
+                m = ((h + l) / 2);  
     }
-    
-    return ((unsigned char)m);
+   return ((unsigned char)m);
 }
-
-            
-                                                                                          
-
