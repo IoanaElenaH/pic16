@@ -2,15 +2,10 @@
 #include "lcd.h"
 #include "rtc.h"
 #include <stdint.h>
-
 #define _XTAL_FREQ 8000000
-
-
-
 uint8_t  i, second, minute, hour, m_day, month, year;
  
 /********************** I2C functions **************************/
- 
 void I2C_Init(uint32_t i2c_clk_freq)
 {
   SSPCON  = 0x28;  // configure MSSP module to work in I2C mode
@@ -127,20 +122,3 @@ void RTC_Status(void)
  
     __delay_ms(50);   // wait 50 ms
 }
-
-
-
-
-// make editing parameter blinks function
-/*void blink()
-{
-  uint8_t j = 0;
-  while(j < 100 && button1 && button2) {
-    j++;
-    __delay_ms(5);
-  }
-}*/
- 
-
-
-
