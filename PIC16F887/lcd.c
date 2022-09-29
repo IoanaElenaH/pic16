@@ -1,14 +1,10 @@
 #include <xc.h>
 #include "lcd.h"
-
 #define	LCD_RS RD4
 #define LCD_EN RD5
 #define LCD_DATA PORTD
 #define	LCD_STROBE()	((LCD_EN = 1), delay_LCD(1), (LCD_EN=0))
-
-
-void init_LCD(void)
-{
+void init_LCD(void){
     delay_LCD(2000);
 //    lcd_write(0x2C);
 //    delay_LCD(100);
